@@ -1,0 +1,197 @@
+---
+title: 'CSR modeling after stimulatioin by TGFB '
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+
+### Level of CSR at AID-ER cells which are stimulated by TGFB and Tamoixfen.
+##### To perform this experiment, three independent AID-ER cell line were stimulated by TGFB. Then zero, one, two, three and four after stimulation, cells were threated with TGFB for 24 houres.
+##### To avoid cell proliferation effect on the experimetn, cells were seeded at the concentration of 25000 per ml and before Tamoxifen treatment, number of TGFB-stimulated cells were counted and adjusted to the intial number.
+
+```{r}
+#![Caption for the picture.](C:/Users/rahjo/OneDrive/2019 Projects/X factor project/Figures/Figure 5/2020 09/TGF model.png)
+
+```
+
+```{r, results='hide'}
+library(ggplot2)
+library(ggrepel)
+library(knitr)
+library(magrittr)
+library(ggpubr)
+
+```
+
+
+```{r}
+Name <- c("A0T1", "A0T1", "A0T1",
+          "A1T1", "A1T1", "A1T1",
+          "A2T1", "A2T1", "A2T1",
+          "A3T1", "A3T1", "A3T1",
+          "A4T1", "A4T1", "A4T1",
+          "A5T1", "A5T1", "A5T1")
+
+Clone <- c(1, 2, 3,
+           1, 2, 3,
+           1, 2, 3,
+           1, 2, 3,
+           1, 2, 3,
+           1, 2, 3)
+
+CSR <- c(1.06, 2.62, 2.61,
+         3.93, 8.14, 9.02,
+         13.2, 19.8, 21.2,
+         11.5, 18.6, 16.5,
+         6, 7.57, 7.49,
+         5.33, 6.58, 6.87)
+
+Act_time <- c(0, 0, 0,
+              1, 1, 1,
+              2, 2, 2,
+              3, 3, 3,
+              4, 4, 4,
+              5, 5, 5)
+
+Tamox <- c(1, 1, 1,
+           1, 1, 1,
+           1, 1, 1,
+           1, 1, 1,
+           1, 1, 1,
+           1, 1, 1)
+
+data <- data.frame(Name, Clone, CSR, Act_time)
+kable(data)
+
+
+```
+###\
+### ==================== Modeling ====================
+
+```{r}
+CSR_model_2 <- lm(data$CSR ~ poly(data$Act_time, degree = 2, raw = T))
+CSR_model_3 <- lm(data$CSR ~ poly(data$Act_time, degree = 3, raw = T))
+CSR_model_4 <- lm(data$CSR ~ poly(data$Act_time, degree = 4, raw = T))
+CSR_model_5 <- lm(data$CSR ~ poly(data$Act_time, degree = 5, raw = T))
+
+```
+##### \
+##### I used annova test to find the best fitted model.
+#####
+
+```{r}
+anova(CSR_model_2, CSR_model_3, CSR_model_4, CSR_model_5)
+
+```
+
+##### Formula Now that we have built the linear model, we also have established the relationship between the predictor and responsein the form of a mathematical formula for Distance (dist) as a function for speed. For the above output, you can notice the ‘Coefficients’ part having two components:
+
+```{r}
+print(CSR_model_4)
+```
+
+```{r}
+summary(CSR_model_4)
+```
+
+##### By using the confint() function we can obtain the confidence intervals of the parameters of our model.
+Confidence intervals for model parameters:
+
+```{r}
+confint(CSR_model_4, level = 0.95)
+```
+
+##### Plot of fitted vs residuals. No clear pattern should show in the residual plot if the model is a good fit.
+
+```{r}
+plot(fitted(CSR_model_4),residuals(CSR_model_4))
+```
+
+
+##### Overall the model seems a good fit as the R squared of 0.8 indicates. The coefficients of the first and third order terms are statistically significant as we expected. Now we can use the predict() function to get the fitted values and the confidence intervals in order to plot everything against our data.
+
+Predicted values and confidence intervals:
+
+```{r}
+predicted.intervals <- predict(CSR_model_4,data.frame(x=data$Act_time),interval='confidence',
+                               level=0.99)
+```
+
+
+
+##### Finding model accuracy
+
+```{r}
+Realdist <- data$CSR
+distPred <- predict(CSR_model_4, data)
+distPred
+```
+
+```{r}
+actuals_preds <- data.frame(cbind(actuals=Realdist, predicteds=distPred))  # make actuals_predicteds dataframe.
+correlation_accuracy <- cor(actuals_preds) #accuracy
+correlation_accuracy
+
+```
+
+##### Ploting models
+```{r}
+plot(data$Act_time, data$CSR, main="Modeling of CSR", xlab="Activation time (day)", ylab="CSR%")
+lines(data$Act_time, predict(CSR_model_4), col = 'blue', add = TRUE)
+```
+
+##### ===============ggplot 2 graph for model===================
+
+```{r}
+
+p <- ggplot(data, aes(x = Act_time, y = CSR)) + geom_point(color="white")
+#Add labels
+p <- p + geom_text_repel(aes(label = Name), size = 3.5, color="white")
+# trend_line
+p <- p + geom_smooth(method = 'lm', formula = y ~ poly(x,4))
+# title
+p <- p + ggtitle("Modeling of CSR after TGFB stimulation")
+p <- p + scale_x_continuous(name = "Time (day)") + scale_y_continuous(name = "CSR rate")
+# change label
+p <- p + theme_minimal() + theme(text = element_text(size=14, color = "white"), plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),
+                                 panel.background = element_rect(fill = 'black', colour = 'white'),
+                                 plot.background = element_rect(fill = 'black', colour = 'black'))
+
+p
+```
+
+##### ========================Proliferation======================
+
+```{r}
+Prolif <- c(25000, 344000, 25000, 303000, 25000, 310000, 25000, 350000, 25000, 327000,
+            25000, 361000, 25000, 350000, 25000, 320000, 25000, 333000, 25000, 358000,
+            25000, 363000, 25000, 344000, 25000, 360000, 25000, 324000, 25000, 343000)
+Clone_prolif <- c("Clone 1", "Clone 1", "Clone 1", "Clone 1", "Clone 1", "Clone 1", "Clone 1", "Clone 1", "Clone 1", "Clone 1",
+            "Clone 2", "Clone 2", "Clone 2", "Clone 2", "Clone 2", "Clone 2", "Clone 2", "Clone 2", "Clone 2", "Clone 2",
+            "Clone 3", "Clone 3", "Clone 3", "Clone 3", "Clone 3", "Clone 3", "Clone 3", "Clone 3", "Clone 3", "Clone 3")
+Act_time_prolif <- c(0, 1,1,2,2,3,3,4,4,5,
+              0, 1,1,2,2,3,3,4,4,5,
+              0, 1,1,2,2,3,3,4,4,5)
+
+Prof_data <- data.frame(Prolif, Clone_prolif, Act_time_prolif)
+
+kable(Prof_data)
+```
+
+
+
+```{r}
+p1 <- ggplot(Prof_data, aes(x = Act_time_prolif, y = Prolif, colour = Clone_prolif)) + geom_point() + geom_line()
+
+p1 <- p1 + ggtitle("Cell proliferation graph")
+p1 <- p1 + scale_x_continuous(name = "Time (day)") + scale_y_continuous(name = "Cell number")
+# change label
+p1 <- p1 + theme_minimal() + theme(legend.position = "none", text = element_text(size=14), plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5)) + labs(color='Clone') 
+
+p1
+```
+
+
