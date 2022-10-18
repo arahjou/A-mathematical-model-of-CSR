@@ -6,4 +6,4 @@ A B cell specific enzyme (known as AID) and a pair of long non-coding RNAs (linc
 
 For the first time, after a conditional expression of AID and quantification of lincRNAs expression, I proved the existence of an unknown factor(s) which regulates this process either.
 
-Furthermore, creating a mathematical model of class switch recombination and predicting the expression dynamic of these unknown factors,  helped me to identify these factors among more than 25000 transcripts. Currently, I am working on the manuscript and I hope it will submit it before Christmas 2022.
+Furthermore, creating a mathematical model of class switch recombination and predicting the expression dynamic of these unknown factors,  helped me to identify these factors among more than 25000 transcripts.
